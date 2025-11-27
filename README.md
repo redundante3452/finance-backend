@@ -73,7 +73,7 @@ The project is organized into modular domains:
 - **src/users**: User management and authentication foundation.
 - **src/accounts**: Management of financial accounts (Cash, Bank, Digital Wallets).
 - **src/categories**: Categorization of financial movements.
-- **src/transactions**: Core logic for income, expenses, and transfers (In Development).
+- **src/transactions**: Core logic for income, expenses, and transfers.
 
 ## License
 
