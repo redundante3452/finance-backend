@@ -26,14 +26,13 @@ import { AuthModule } from './auth/auth.module';
             type: 'postgres',
             url: configService.get('FINANCE_DB_POSTGRES_URL_NON_POOLING'),
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            synchronize: false,
+            synchronize: true, // ✅ Habilitado temporalmente para crear las tablas
             ssl: {
-              rejectUnauthorized: false, // Importante para Vercel/Supabase
-              requestCert: true,
+              rejectUnauthorized: false,
             },
             extra: {
               ssl: {
-                rejectUnauthorized: false, // Redundancia para asegurar que pg-driver lo tome
+                rejectUnauthorized: false,
               },
             },
           };
