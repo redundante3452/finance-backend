@@ -5,38 +5,41 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => {
-        const isProd = configService.get<string>('NODE_ENV') === 'production';
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => {
+        const isProd = config.get('NODE_ENV') === 'production';
 
         if (isProd) {
+          console.log('🟢 Connecting to Supabase (Prod)');
+
           return {
             type: 'postgres',
-            url: configService.get<string>('FINANCE_DB_POSTGRES_URL_NON_POOLING'),
-            entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            synchronize: false,       // en producción, manual o migraciones
+            url: config.get<string>('FINANCE_DB_POSTGRES_URL_NON_POOLING'),
+            autoLoadEntities: true,
+            synchronize: false,
+
             ssl: {
-              rejectUnauthorized: false  // permite certificados “self-signed” sin validación
+              rejectUnauthorized: false, // ⭐ necesario para Vercel
             },
           };
         }
 
-        // Configuración para desarrollo local
+        console.log('🔵 Connecting locally (Dev)');
         return {
           type: 'postgres',
-          host: configService.get<string>('DB_HOST', 'localhost'),
-          port: configService.get<number>('DB_PORT', 5432),
-          username: configService.get<string>('DB_USERNAME', 'postgres'),
-          password: configService.get<string>('DB_PASSWORD', 'postgres'),
-          database: configService.get<string>('DB_NAME', 'finance'),
-          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          host: config.get('DB_HOST', 'localhost'),
+          port: config.get('DB_PORT', 5432),
+          username: config.get('DB_USERNAME', 'postgres'),
+          password: config.get('DB_PASSWORD', 'postgres'),
+          database: config.get('DB_NAME', 'finance'),
+          autoLoadEntities: true,
           synchronize: true,
         };
       },
-      inject: [ConfigService],
     }),
-    // ... otros módulos
   ],
 })
 export class AppModule { }
