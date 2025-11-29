@@ -1,27 +1,20 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
-import { AccountsModule } from './accounts/accounts.module';
-import { CategoriesModule } from './categories/categories.module';
-import { TransactionsModule } from './transactions/transactions.module';
-import { AuthModule } from './auth/auth.module';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const nodeEnv = configService.get<string>('NODE_ENV') || 'production';
-        const isProd = nodeEnv === 'production';
+        const isProd = configService.get<string>('NODE_ENV') === 'production';
 
         if (isProd) {
-          console.log('🟢 TypeORM connecting to Supabase (prod) via FINANCE_DB_POSTGRES_URL_NON_POOLING');
+          // Leer certificado CA
+          const ca = readFileSync(join(__dirname, 'ca.pem'));
 
           return {
             type: 'postgres',
@@ -29,13 +22,13 @@ import { AuthModule } from './auth/auth.module';
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
             synchronize: false,
             ssl: {
-              rejectUnauthorized: false,
+              rejectUnauthorized: true,  // exige que el certificado sea válido
+              ca: ca,
             },
           };
         }
 
-        console.log('🔵 TypeORM connecting locally (dev)');
-
+        // configuración local...
         return {
           type: 'postgres',
           host: configService.get<string>('DB_HOST', 'localhost'),
@@ -49,13 +42,7 @@ import { AuthModule } from './auth/auth.module';
       },
       inject: [ConfigService],
     }),
-    UsersModule,
-    AccountsModule,
-    CategoriesModule,
-    TransactionsModule,
-    AuthModule,
+    // ... otros módulos
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule { }
