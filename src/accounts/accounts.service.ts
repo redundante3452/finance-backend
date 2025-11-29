@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateAccountDto } from './dto/create-account.dto';
@@ -12,28 +12,66 @@ export class AccountsService {
         private readonly accountRepository: Repository<Account>,
     ) { }
 
-    async create(createAccountDto: CreateAccountDto): Promise<Account> {
+    async create(createAccountDto: CreateAccountDto & { userId: string }): Promise<Account> {
         const account = this.accountRepository.create(createAccountDto);
         return await this.accountRepository.save(account);
     }
 
+    async findByUserId(userId: string): Promise<Account[]> {
+        return await this.accountRepository.find({
+            where: { userId },
+            order: { createdAt: 'DESC' },
+        });
+    }
+
+    async findOne(id: string): Promise<Account> {
+        const account = await this.accountRepository.findOne({
+            where: { id },
+        });
+        if (!account) {
+            throw new NotFoundException(`Account with ID ${id} not found`);
+        }
+        return account;
+    }
+
+    async findOneByUser(id: string, userId: string): Promise<Account> {
+        const account = await this.accountRepository.findOne({
+            where: { id, userId },
+        });
+        if (!account) {
+            throw new NotFoundException(`Account with ID ${id} not found`);
+        }
+        return account;
+    }
+
+    async updateByUser(id: string, userId: string, updateAccountDto: UpdateAccountDto): Promise<Account> {
+        const account = await this.findOne(id);
+
+        if (account.userId !== userId) {
+            throw new ForbiddenException('Account does not belong to the user');
+        }
+
+        this.accountRepository.merge(account, updateAccountDto);
+        return await this.accountRepository.save(account);
+    }
+
+    async removeByUser(id: string, userId: string): Promise<void> {
+        const account = await this.findOne(id);
+
+        if (account.userId !== userId) {
+            throw new ForbiddenException('Account does not belong to the user');
+        }
+
+        await this.accountRepository.remove(account);
+    }
+
+    // Keep old methods for internal use
     async findAll(): Promise<Account[]> {
         const accounts = await this.accountRepository.find({ relations: ['user'] });
         if (accounts.length === 0) {
             throw new NotFoundException('No accounts found');
         }
         return accounts;
-    }
-
-    async findOne(id: string): Promise<Account> {
-        const account = await this.accountRepository.findOne({
-            where: { id },
-            relations: ['user']
-        });
-        if (!account) {
-            throw new NotFoundException(`Account with ID ${id} not found`);
-        }
-        return account;
     }
 
     async update(id: string, updateAccountDto: UpdateAccountDto): Promise<Account> {

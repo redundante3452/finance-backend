@@ -1,5 +1,4 @@
 import { Account } from 'src/accounts/entities/account.entity';
-import { CategoriesController } from 'src/categories/categories.controller';
 import { Category } from 'src/categories/entities/category.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';

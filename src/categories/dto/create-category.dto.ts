@@ -25,9 +25,4 @@ export class CreateCategoryDto {
     @IsString()
     @IsOptional()
     color?: string;
-
-    @ApiProperty({ example: 'uuid-user-id' })
-    @IsUUID()
-    @IsNotEmpty()
-    userId: string;
 }

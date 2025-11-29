@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, FindOptionsWhere } from 'typeorm';
 
-import { Transaction } from './entities/transaction/transaction';
+import { Transaction } from './entities/transaction/transaction.entity';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto/update-transaction.dto';
 import { FilterTransactionDto } from './dto/filter-transaction.dto/filter-transaction.dto';
@@ -96,7 +96,8 @@ export class TransactionsService {
         return await this.transactionRepository.find({
             where,
             order: { date: 'DESC' },
-            relations: ['account', 'category', 'sourceAccount', 'destinationAccount'],
+            // Removed relations to avoid 500 errors when tables are empty
+            // relations: ['account', 'category', 'sourceAccount', 'destinationAccount'],
         });
     }
 

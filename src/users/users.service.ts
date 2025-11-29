@@ -43,4 +43,15 @@ export class UsersService {
         const user = await this.findOne(id);
         await this.userRepository.remove(user);
     }
+
+    async findByEmail(email: string): Promise<User | null> {
+        return await this.userRepository.findOne({ where: { email } });
+    }
+
+    async findByEmailWithPassword(email: string): Promise<User | null> {
+        return await this.userRepository.findOne({
+            where: { email },
+            select: ['id', 'name', 'email', 'password', 'createdAt', 'updatedAt'],
+        });
+    }
 }

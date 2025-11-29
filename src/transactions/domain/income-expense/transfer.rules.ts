@@ -1,4 +1,4 @@
-import { Transaction } from "src/transactions/entities/transaction/transaction";
+import { Transaction } from "src/transactions/entities/transaction/transaction.entity";
 import { BalanceRules } from "./balance.rules";
 import { OwnershipValidator } from "./ownership.validator";
 

@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { OwnershipValidator } from './ownership.validator';
 import { BalanceRules } from './balance.rules';
-import { Transaction } from 'src/transactions/entities/transaction/transaction';
+import { Transaction } from 'src/transactions/entities/transaction/transaction.entity';
 
 export class IncomeExpenseRules {
     constructor(

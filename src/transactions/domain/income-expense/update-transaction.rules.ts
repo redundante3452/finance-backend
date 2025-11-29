@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { Transaction } from 'src/transactions/entities/transaction/transaction';
+import { Transaction } from 'src/transactions/entities/transaction/transaction.entity';
 import { UpdateTransactionDto } from 'src/transactions/dto/update-transaction.dto/update-transaction.dto';
 import { BalanceRules } from './balance.rules';
 import { OwnershipValidator } from './ownership.validator';

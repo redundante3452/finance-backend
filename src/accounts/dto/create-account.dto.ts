@@ -21,9 +21,4 @@ export class CreateAccountDto {
     @IsString()
     @IsOptional()
     currency?: string;
-
-    @ApiProperty({ example: 'uuid-user-id', description: 'ID del usuario propietario' })
-    @IsUUID()
-    @IsNotEmpty()
-    userId: string;
 }

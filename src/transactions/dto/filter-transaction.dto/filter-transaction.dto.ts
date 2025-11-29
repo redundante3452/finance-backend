@@ -1,6 +1,7 @@
 import { IsOptional, IsString, IsUUID, IsDateString, IsEnum } from 'class-validator';
 
 export class FilterTransactionDto {
+
     @IsOptional()
     @IsEnum(['INCOME', 'EXPENSE', 'TRANSFER'])
     type?: 'INCOME' | 'EXPENSE' | 'TRANSFER';

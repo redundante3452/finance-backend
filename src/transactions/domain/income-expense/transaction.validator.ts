@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { Transaction } from 'src/transactions/entities/transaction/transaction';
+import { Transaction } from 'src/transactions/entities/transaction/transaction.entity';
 
 export class TransactionValidator {
     validateTypeAndRequiredFields(transaction: Transaction) {
