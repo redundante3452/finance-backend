@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -22,40 +20,27 @@ import { AuthModule } from './auth/auth.module';
       useFactory: (configService: ConfigService) => {
         const isProduction = configService.get('NODE_ENV') === 'production';
 
-        // En producción (Vercel) usamos la URL de conexión directa o pooler
         if (isProduction) {
-          const url = configService.get('FINANCE_DB_POSTGRES_URL_NON_POOLING') || configService.get('DATABASE_URL') || configService.get('POSTGRES_URL');
+          // Prioridad: DATABASE_URL (Estándar Vercel/Supabase) -> FINANCE_DB_POSTGRES_URL_NON_POOLING (Legacy)
+          const url = configService.get('DATABASE_URL') || configService.get('FINANCE_DB_POSTGRES_URL_NON_POOLING');
 
           if (!url) {
             console.error('CRITICAL: No database URL found in environment variables (Production)');
+            throw new Error('DATABASE_URL is missing');
           }
 
-          let sslConfig: any = { rejectUnauthorized: false };
-          const certPath = path.join(process.cwd(), 'prod-ca-2021.crt');
-
-          if (fs.existsSync(certPath)) {
-            try {
-              const ca = fs.readFileSync(certPath).toString();
-              sslConfig = {
-                rejectUnauthorized: true,
-                ca: ca,
-              };
-              console.log('SSL Certificate loaded successfully from:', certPath);
-            } catch (err) {
-              console.error('Error reading SSL certificate:', err);
-            }
-          } else {
-            console.warn('SSL Certificate not found at:', certPath, 'Using insecure connection.');
-          }
+          console.log('Connecting to database (Production)...');
 
           return {
             type: 'postgres',
             url: url,
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            synchronize: true,
-            ssl: sslConfig,
+            synchronize: true, // Cuidado en producción, idealmente false y usar migraciones
+            ssl: true,
             extra: {
-              ssl: sslConfig,
+              ssl: {
+                rejectUnauthorized: false, // Necesario para Supabase Transaction Pooler en algunos casos
+              },
             },
           };
         }
