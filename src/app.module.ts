@@ -30,18 +30,14 @@ import { AuthModule } from './auth/auth.module';
           }
 
           console.log('Connecting to database (Production)...');
+          console.log('Using URL (masked):', url?.substring(0, 30) + '...');
 
           return {
             type: 'postgres',
             url: url,
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
             synchronize: true, // Cuidado en producción, idealmente false y usar migraciones
-            ssl: true,
-            extra: {
-              ssl: {
-                rejectUnauthorized: false, // Necesario para Supabase Transaction Pooler en algunos casos
-              },
-            },
+            ssl: false, // Deshabilitado completamente para evitar problemas de certificados
           };
         }
 
