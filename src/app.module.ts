@@ -26,13 +26,11 @@ import { AuthModule } from './auth/auth.module';
             type: 'postgres',
             url: configService.get('FINANCE_DB_POSTGRES_URL_NON_POOLING'),
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            synchronize: true, // ✅ Habilitado temporalmente para crear las tablas
-            ssl: {
-              rejectUnauthorized: false,
-            },
+            synchronize: true,
+            ssl: true, // Habilitar SSL genérico
             extra: {
               ssl: {
-                rejectUnauthorized: false,
+                rejectUnauthorized: false, // Esta es la clave para self-signed certs
               },
             },
           };
