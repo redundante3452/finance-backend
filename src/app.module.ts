@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 
 @Module({
   imports: [
@@ -13,22 +11,18 @@ import { join } from 'path';
         const isProd = configService.get<string>('NODE_ENV') === 'production';
 
         if (isProd) {
-          // Leer certificado CA
-          const ca = readFileSync(join(__dirname, 'ca.pem'));
-
           return {
             type: 'postgres',
             url: configService.get<string>('FINANCE_DB_POSTGRES_URL_NON_POOLING'),
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            synchronize: false,
+            synchronize: false,       // en producción, manual o migraciones
             ssl: {
-              rejectUnauthorized: false,  // exige que el certificado sea válido
-              ca: ca,
+              rejectUnauthorized: false  // permite certificados “self-signed” sin validación
             },
           };
         }
 
-        // configuración local...
+        // Configuración para desarrollo local
         return {
           type: 'postgres',
           host: configService.get<string>('DB_HOST', 'localhost'),
