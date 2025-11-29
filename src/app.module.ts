@@ -22,7 +22,7 @@ import { join } from 'path';
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
             synchronize: false,
             ssl: {
-              rejectUnauthorized: true,  // exige que el certificado sea válido
+              rejectUnauthorized: false,  // exige que el certificado sea válido
               ca: ca,
             },
           };
