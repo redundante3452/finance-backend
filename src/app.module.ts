@@ -17,22 +17,25 @@ import { AuthModule } from './auth/auth.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const isProd = configService.get<string>('NODE_ENV') === 'production';
+        const nodeEnv = configService.get<string>('NODE_ENV') || 'production';
+        const isProd = nodeEnv === 'production';
 
         if (isProd) {
-          // 🌐 PRODUCCIÓN – Supabase
+          console.log('🟢 TypeORM connecting to Supabase (prod) via FINANCE_DB_POSTGRES_URL_NON_POOLING');
+
           return {
             type: 'postgres',
-            url: configService.get<string>(
-              'FINANCE_DB_POSTGRES_URL_NON_POOLING',
-            ), // o FINANCE_DB_POSTGRES_URL
+            url: configService.get<string>('FINANCE_DB_POSTGRES_URL_NON_POOLING'),
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
             synchronize: false,
-            ssl: { rejectUnauthorized: false },
+            ssl: {
+              rejectUnauthorized: false,
+            },
           };
         }
 
-        // 💻 DESARROLLO LOCAL – tus variables DB_*
+        console.log('🔵 TypeORM connecting locally (dev)');
+
         return {
           type: 'postgres',
           host: configService.get<string>('DB_HOST', 'localhost'),
