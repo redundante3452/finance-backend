@@ -24,7 +24,7 @@ import { AuthModule } from './auth/auth.module';
         if (isProduction) {
           return {
             type: 'postgres',
-            url: configService.get('POSTGRES_URL'), // Variable estándar de Vercel/Supabase
+            url: configService.get('FINANCE_DB_POSTGRES_URL_NON_POOLING'), // Usamos la variable específica de tu integración
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
             synchronize: false, // Desactivado en producción
             ssl: {
