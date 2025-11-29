@@ -1,45 +1,58 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UsersModule } from './users/users.module';
+import { AccountsModule } from './accounts/accounts.module';
+import { CategoriesModule } from './categories/categories.module';
+import { TransactionsModule } from './transactions/transactions.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (config: ConfigService) => {
-        const isProd = config.get('NODE_ENV') === 'production';
+      useFactory: (configService: ConfigService) => {
+        const isProduction = configService.get('NODE_ENV') === 'production';
 
-        if (isProd) {
-          console.log('🟢 Connecting to Supabase (Prod)');
-
+        // En producción (Vercel) usamos la URL de conexión directa o pooler
+        if (isProduction) {
           return {
             type: 'postgres',
-            url: config.get<string>('FINANCE_DB_POSTGRES_URL_NON_POOLING'),
-            autoLoadEntities: true,
-            synchronize: false,
-
+            url: configService.get('POSTGRES_URL'), // Variable estándar de Vercel/Supabase
+            entities: [__dirname + '/**/*.entity{.ts,.js}'],
+            synchronize: false, // Desactivado en producción
             ssl: {
-              rejectUnauthorized: false, // ⭐ necesario para Vercel
+              rejectUnauthorized: false, // Necesario para Supabase en Vercel
             },
           };
         }
 
-        console.log('🔵 Connecting locally (Dev)');
+        // En desarrollo local
         return {
           type: 'postgres',
-          host: config.get('DB_HOST', 'localhost'),
-          port: config.get('DB_PORT', 5432),
-          username: config.get('DB_USERNAME', 'postgres'),
-          password: config.get('DB_PASSWORD', 'postgres'),
-          database: config.get('DB_NAME', 'finance'),
-          autoLoadEntities: true,
+          host: configService.get<string>('DB_HOST'),
+          port: configService.get<number>('DB_PORT'),
+          username: configService.get<string>('DB_USERNAME'),
+          password: configService.get<string>('DB_PASSWORD'),
+          database: configService.get<string>('DB_NAME'),
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: true,
         };
       },
     }),
+    UsersModule,
+    AccountsModule,
+    CategoriesModule,
+    TransactionsModule,
+    AuthModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule { }
