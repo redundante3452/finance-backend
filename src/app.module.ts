@@ -16,17 +16,34 @@ import { AuthModule } from './auth/auth.module';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_NAME'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: process.env.NODE_ENV !== 'production', // Solo para desarrollo
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false, // SSL para producción
-      }),
+      useFactory: (configService: ConfigService) => {
+        const isProd = configService.get<string>('NODE_ENV') === 'production';
+
+        if (isProd) {
+          // 🌐 PRODUCCIÓN – Supabase
+          return {
+            type: 'postgres',
+            url: configService.get<string>(
+              'FINANCE_DB_POSTGRES_URL_NON_POOLING',
+            ), // o FINANCE_DB_POSTGRES_URL
+            entities: [__dirname + '/**/*.entity{.ts,.js}'],
+            synchronize: false,
+            ssl: { rejectUnauthorized: false },
+          };
+        }
+
+        // 💻 DESARROLLO LOCAL – tus variables DB_*
+        return {
+          type: 'postgres',
+          host: configService.get<string>('DB_HOST', 'localhost'),
+          port: configService.get<number>('DB_PORT', 5432),
+          username: configService.get<string>('DB_USERNAME', 'postgres'),
+          password: configService.get<string>('DB_PASSWORD', 'postgres'),
+          database: configService.get<string>('DB_NAME', 'finance'),
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          synchronize: true,
+        };
+      },
       inject: [ConfigService],
     }),
     UsersModule,
