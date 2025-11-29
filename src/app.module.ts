@@ -24,11 +24,17 @@ import { AuthModule } from './auth/auth.module';
         if (isProduction) {
           return {
             type: 'postgres',
-            url: configService.get('FINANCE_DB_POSTGRES_URL_NON_POOLING'), // Usamos la variable específica de tu integración
+            url: configService.get('FINANCE_DB_POSTGRES_URL_NON_POOLING'),
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            synchronize: false, // Desactivado en producción
+            synchronize: false,
             ssl: {
-              rejectUnauthorized: false, // Necesario para Supabase en Vercel
+              rejectUnauthorized: false, // Importante para Vercel/Supabase
+              requestCert: true,
+            },
+            extra: {
+              ssl: {
+                rejectUnauthorized: false, // Redundancia para asegurar que pg-driver lo tome
+              },
             },
           };
         }
