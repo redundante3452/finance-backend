@@ -24,7 +24,8 @@ import { AuthModule } from './auth/auth.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, // Solo para desarrollo
+        synchronize: process.env.NODE_ENV !== 'production', // Solo para desarrollo
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false, // SSL para producción
       }),
       inject: [ConfigService],
     }),

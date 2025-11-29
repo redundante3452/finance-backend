@@ -6,9 +6,11 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Enable CORS for Flutter Web app
+  // Enable CORS
   app.enableCors({
-    origin: '*', // Permite todos los orígenes (solo para desarrollo)
+    origin: process.env.NODE_ENV === 'production'
+      ? [process.env.FRONTEND_URL || 'https://your-frontend.vercel.app']
+      : '*', // En desarrollo permite todos, en producción solo el frontend
     credentials: true,
   });
 
