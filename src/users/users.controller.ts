@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -39,4 +40,21 @@ export class UsersController {
     remove(@Param('id', ParseUUIDPipe) id: string) {
         return this.usersService.remove(id);
     }
+
+    @Patch(':id/password')
+    @ApiOperation({ summary: 'Cambiar contraseña de usuario' })
+    @ApiResponse({ status: 200, description: 'Contraseña actualizada exitosamente.' })
+    @ApiResponse({ status: 400, description: 'Contraseña actual incorrecta.' })
+    @ApiResponse({ status: 404, description: 'Usuario no encontrado.' })
+    changePassword(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Body() changePasswordDto: ChangePasswordDto,
+    ) {
+        return this.usersService.changePassword(
+            id,
+            changePasswordDto.currentPassword,
+            changePasswordDto.newPassword,
+        );
+    }
+
 }

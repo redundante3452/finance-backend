@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import bcrypt from 'node_modules/bcryptjs/umd/types';
 
 @Injectable()
 export class UsersService {
@@ -31,6 +32,29 @@ export class UsersService {
             throw new NotFoundException(`User with ID ${id} not found`);
         }
         return user;
+    }
+    async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+        // Obtener usuario con contraseña
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            select: ['id', 'password'],
+        });
+
+        if (!user) {
+            throw new NotFoundException('Usuario no encontrado');
+        }
+
+        // Verificar contraseña actual
+        const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isPasswordValid) {
+            throw new BadRequestException('La contraseña actual es incorrecta');
+        }
+
+        // Hash de la nueva contraseña
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Actualizar contraseña
+        await this.userRepository.update(userId, { password: hashedPassword });
     }
 
     async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
