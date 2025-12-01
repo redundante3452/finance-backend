@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -59,6 +59,14 @@ export class UsersService {
 
     async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
         const user = await this.findOne(id);
+
+        if (updateUserDto.email && updateUserDto.email !== user.email) {
+            const existingUser = await this.findByEmail(updateUserDto.email);
+            if (existingUser && existingUser.id !== id) {
+                throw new ConflictException('El correo electrónico ya está en uso');
+            }
+        }
+
         this.userRepository.merge(user, updateUserDto);
         return await this.userRepository.save(user);
     }
