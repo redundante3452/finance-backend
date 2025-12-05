@@ -1,36 +1,44 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 export class CreateTransactionDto {
-    @IsEnum(['INCOME', 'EXPENSE', 'TRANSFER'])
-    type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+  @IsEnum(['INCOME', 'EXPENSE', 'TRANSFER'])
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
 
-    @IsNumber()
-    @Min(0.01)
-    amount: number;
+  @IsNumber()
+  @Min(0.01)
+  amount: number;
 
-    // INCOME / EXPENSE
-    @IsUUID()
-    @IsOptional()
-    accountId?: string;
+  // INCOME / EXPENSE
+  @IsUUID()
+  @IsOptional()
+  accountId?: string;
 
-    @IsUUID()
-    @IsOptional()
-    categoryId?: string;
+  @IsUUID()
+  @IsOptional()
+  categoryId?: string;
 
-    // TRANSFER
-    @IsUUID()
-    @IsOptional()
-    sourceAccountId?: string;
+  // TRANSFER
+  @IsUUID()
+  @IsOptional()
+  sourceAccountId?: string;
 
-    @IsUUID()
-    @IsOptional()
-    destinationAccountId?: string;
+  @IsUUID()
+  @IsOptional()
+  destinationAccountId?: string;
 
-    @IsString()
-    @IsOptional()
-    description?: string;
+  @IsString()
+  @IsOptional()
+  description?: string;
 
-    @IsString()
-    @IsOptional()
-    date?: string; // o Date, dependiendo cómo lo manejes
+  @IsString()
+  @IsOptional()
+  date?: string; // o Date, dependiendo cómo lo manejes
 }

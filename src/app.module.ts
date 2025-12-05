@@ -8,6 +8,7 @@ import { AccountsModule } from './accounts/accounts.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { AuthModule } from './auth/auth.module';
+import { OutingsModule } from './outings/outings.module';
 
 @Module({
   imports: [
@@ -26,11 +27,20 @@ import { AuthModule } from './auth/auth.module';
 
         if (isProduction) {
           // Prioridad: DATABASE_URL (Estándar Vercel/Supabase) -> FINANCE_DB_POSTGRES_URL_NON_POOLING (Legacy)
-          const url = configService.get('DATABASE_URL') || configService.get('FINANCE_DB_POSTGRES_URL_NON_POOLING');
+          const url =
+            configService.get('DATABASE_URL') ||
+            configService.get('FINANCE_DB_POSTGRES_URL_NON_POOLING');
 
           if (!url) {
-            console.error('CRITICAL: No database URL found in environment variables (Production)');
-            console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('DB') || k.includes('DATABASE')));
+            console.error(
+              'CRITICAL: No database URL found in environment variables (Production)',
+            );
+            console.error(
+              'Available env vars:',
+              Object.keys(process.env).filter(
+                (k) => k.includes('DB') || k.includes('DATABASE'),
+              ),
+            );
             throw new Error('DATABASE_URL is missing');
           }
 
@@ -67,8 +77,9 @@ import { AuthModule } from './auth/auth.module';
     CategoriesModule,
     TransactionsModule,
     AuthModule,
+    OutingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

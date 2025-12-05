@@ -15,7 +15,7 @@ async function bootstrap() {
     if (frontendUrl === '*') {
       origin = '*';
     } else {
-      origin = frontendUrl.split(',').map(url => url.trim());
+      origin = frontendUrl.split(',').map((url) => url.trim());
     }
   }
 
@@ -26,11 +26,13 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type, Accept, Authorization',
   });
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Finance API')

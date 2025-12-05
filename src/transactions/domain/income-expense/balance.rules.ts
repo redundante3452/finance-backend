@@ -2,70 +2,68 @@ import { BadRequestException } from '@nestjs/common';
 import { AccountsService } from 'src/accounts/accounts.service';
 
 export class BalanceRules {
-    constructor(
-        private readonly accountService: AccountsService,
-    ) { }
+  constructor(private readonly accountService: AccountsService) {}
 
-    async applyIncome(account, amount: number) {
-        const Newbalance = Number(account.balance) + amount
-        await this.accountService.update(account.id, {
-            balance: Newbalance,
-        })
+  async applyIncome(account, amount: number) {
+    const Newbalance = Number(account.balance) + amount;
+    await this.accountService.update(account.id, {
+      balance: Newbalance,
+    });
+  }
+
+  async applyExpense(account, amount: number) {
+    const currentBalance = Number(account.balance);
+    if (currentBalance < amount) {
+      throw new BadRequestException('Insufficient balance');
+    }
+    const newBalance = currentBalance - amount;
+    await this.accountService.update(account.id, {
+      balance: newBalance,
+    });
+  }
+
+  async applyTransfer(source, destination, amount: number) {
+    if (source.balance < amount) {
+      throw new BadRequestException('Insufficient balance');
     }
 
-    async applyExpense(account, amount: number) {
-        const currentBalance = Number(account.balance)
-        if (currentBalance < amount) {
-            throw new BadRequestException('Insufficient balance')
-        }
-        const newBalance = currentBalance - amount
-        await this.accountService.update(account.id, {
-            balance: newBalance,
-        })
-    }
+    const newSource = source.balance - amount;
+    const newDestination = destination.balance + amount;
 
-    async applyTransfer(source, destination, amount: number) {
-        if (source.balance < amount) {
-            throw new BadRequestException('Insufficient balance');
-        }
+    await this.accountService.update(source.id, {
+      balance: newSource,
+    });
+    await this.accountService.update(destination.id, {
+      balance: newDestination,
+    });
 
-        const newSource = source.balance - amount;
-        const newDestination = destination.balance + amount;
+    return { newSource, newDestination };
+  }
 
-        await this.accountService.update(source.id, {
-            balance: newSource,
-        })
-        await this.accountService.update(destination.id, {
-            balance: newDestination,
-        })
+  async revertIncome(account, amount: number) {
+    const newBalance = Number(account.balance) - amount;
+    await this.accountService.update(account.id, {
+      balance: newBalance,
+    });
+  }
 
-        return { newSource, newDestination };
-    }
+  async revertExpense(account, amount: number) {
+    const newBalance = Number(account.balance) + amount;
+    await this.accountService.update(account.id, {
+      balance: newBalance,
+    });
+  }
 
-    async revertIncome(account, amount: number) {
-        const newBalance = Number(account.balance) - amount;
-        await this.accountService.update(account.id, {
-            balance: newBalance,
-        });
-    }
+  async revertTransfer(source, destination, amount: number) {
+    // Revertir transferencia: devolver dinero al origen, quitar del destino
+    const newSource = Number(source.balance) + amount;
+    const newDestination = Number(destination.balance) - amount;
 
-    async revertExpense(account, amount: number) {
-        const newBalance = Number(account.balance) + amount;
-        await this.accountService.update(account.id, {
-            balance: newBalance,
-        });
-    }
-
-    async revertTransfer(source, destination, amount: number) {
-        // Revertir transferencia: devolver dinero al origen, quitar del destino
-        const newSource = Number(source.balance) + amount;
-        const newDestination = Number(destination.balance) - amount;
-
-        await this.accountService.update(source.id, {
-            balance: newSource,
-        });
-        await this.accountService.update(destination.id, {
-            balance: newDestination,
-        });
-    }
+    await this.accountService.update(source.id, {
+      balance: newSource,
+    });
+    await this.accountService.update(destination.id, {
+      balance: newDestination,
+    });
+  }
 }

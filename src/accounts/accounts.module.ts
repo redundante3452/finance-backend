@@ -6,12 +6,9 @@ import { Account } from './entities/account.entity';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Account]),
-    AuthModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Account]), AuthModule],
   controllers: [AccountsController],
   providers: [AccountsService],
   exports: [AccountsService],
 })
-export class AccountsModule { }
+export class AccountsModule {}
