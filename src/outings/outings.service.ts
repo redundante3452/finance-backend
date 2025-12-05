@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Outing } from './entities/outing.entity';
 import { OutingAccount } from './entities/outing-account.entity';
 import { Participant } from './entities/participant.entity';
@@ -26,6 +26,7 @@ export class OutingsService {
     private productRepository: Repository<Product>,
     @InjectRepository(Payer)
     private payerRepository: Repository<Payer>,
+    private dataSource: DataSource,
   ) {}
 
   // Outings
@@ -123,20 +124,75 @@ export class OutingsService {
 
   // Calculation
   async calculateDebts(outingId: string) {
-    const outing = await this.outingRepository.findOne({
-      where: { id: outingId },
-      relations: [
-        'participants',
-        'accounts',
-        'accounts.products',
-        'accounts.payers',
-      ],
-    });
+    // Use QueryBuilder to ensure all fields including participantId are loaded
+    const outing = await this.dataSource
+      .getRepository(Outing)
+      .createQueryBuilder('outing')
+      .leftJoinAndSelect('outing.participants', 'participants')
+      .leftJoinAndSelect('outing.accounts', 'accounts')
+      .leftJoinAndSelect('accounts.products', 'products')
+      .leftJoinAndSelect('accounts.payers', 'payers')
+      .where('outing.id = :id', { id: outingId })
+      .getOne();
 
     if (!outing) {
       throw new NotFoundException('Outing not found');
     }
 
     return DebtCalculator.calculate(outing);
+  }
+
+  // DELETE operations
+  async deleteOuting(id: string, userId: string): Promise<void> {
+    const outing = await this.outingRepository.findOne({
+      where: { id, userId },
+    });
+    if (!outing) {
+      throw new NotFoundException('Outing not found');
+    }
+    await this.outingRepository.remove(outing);
+  }
+
+  async deleteParticipant(
+    outingId: string,
+    participantId: string,
+  ): Promise<void> {
+    const participant = await this.participantRepository.findOne({
+      where: { id: participantId, outingId },
+    });
+    if (!participant) {
+      throw new NotFoundException('Participant not found');
+    }
+    await this.participantRepository.remove(participant);
+  }
+
+  async deleteAccount(outingId: string, accountId: string): Promise<void> {
+    const account = await this.accountRepository.findOne({
+      where: { id: accountId, outingId },
+    });
+    if (!account) {
+      throw new NotFoundException('Account not found');
+    }
+    await this.accountRepository.remove(account);
+  }
+
+  async deleteProduct(accountId: string, productId: string): Promise<void> {
+    const product = await this.productRepository.findOne({
+      where: { id: productId, accountId },
+    });
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+    await this.productRepository.remove(product);
+  }
+
+  async deletePayer(accountId: string, payerId: string): Promise<void> {
+    const payer = await this.payerRepository.findOne({
+      where: { id: payerId, accountId },
+    });
+    if (!payer) {
+      throw new NotFoundException('Payer not found');
+    }
+    await this.payerRepository.remove(payer);
   }
 }

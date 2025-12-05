@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { OutingsService } from './outings.service';
 import { Outing } from './entities/outing.entity';
 import { Participant } from './entities/participant.entity';
@@ -14,9 +14,22 @@ describe('OutingsService', () => {
   let outingRepo: Repository<Outing>;
   let participantRepo: Repository<Participant>;
   let productRepo: Repository<Product>;
+  let dataSource: DataSource;
 
   const mockOutingId = 'outing-1';
   const mockUserId = 'user-1';
+
+  const mockQueryBuilder = {
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    getOne: jest.fn(),
+  };
+
+  const mockDataSource = {
+    getRepository: jest.fn().mockReturnValue({
+      createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
+    }),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -27,6 +40,7 @@ describe('OutingsService', () => {
         { provide: getRepositoryToken(OutingAccount), useClass: Repository },
         { provide: getRepositoryToken(Product), useClass: Repository },
         { provide: getRepositoryToken(Payer), useClass: Repository },
+        { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
 
@@ -34,6 +48,7 @@ describe('OutingsService', () => {
     outingRepo = module.get(getRepositoryToken(Outing));
     participantRepo = module.get(getRepositoryToken(Participant));
     productRepo = module.get(getRepositoryToken(Product));
+    dataSource = module.get(DataSource);
   });
 
   describe('createOuting', () => {
@@ -113,7 +128,7 @@ describe('OutingsService', () => {
 
   describe('calculateDebts', () => {
     it('should throw NotFoundException if outing not found', async () => {
-      jest.spyOn(outingRepo, 'findOne').mockResolvedValue(null);
+      mockQueryBuilder.getOne.mockResolvedValue(null);
       await expect(service.calculateDebts('invalid-id')).rejects.toThrow(
         NotFoundException,
       );
@@ -125,7 +140,7 @@ describe('OutingsService', () => {
         participants: [],
         accounts: [],
       };
-      jest.spyOn(outingRepo, 'findOne').mockResolvedValue(outing as any);
+      mockQueryBuilder.getOne.mockResolvedValue(outing);
 
       const result = await service.calculateDebts(mockOutingId);
       expect(result).toHaveProperty('balances');
