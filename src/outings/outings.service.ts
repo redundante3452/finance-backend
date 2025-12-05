@@ -125,13 +125,16 @@ export class OutingsService {
   // Calculation
   async calculateDebts(outingId: string) {
     // Use QueryBuilder to ensure all fields including participantId are loaded
+    // Also load participant relation for payers and products as fallback
     const outing = await this.dataSource
       .getRepository(Outing)
       .createQueryBuilder('outing')
       .leftJoinAndSelect('outing.participants', 'participants')
       .leftJoinAndSelect('outing.accounts', 'accounts')
       .leftJoinAndSelect('accounts.products', 'products')
+      .leftJoinAndSelect('products.participant', 'productParticipant')
       .leftJoinAndSelect('accounts.payers', 'payers')
+      .leftJoinAndSelect('payers.participant', 'payerParticipant')
       .where('outing.id = :id', { id: outingId })
       .getOne();
 

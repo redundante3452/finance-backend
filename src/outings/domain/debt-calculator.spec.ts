@@ -176,4 +176,98 @@ describe('DebtCalculator', () => {
     expect(debtFromC.toParticipantId).toBe('A');
     expect(debtFromC.amount).toBe(100);
   });
+
+  it('should correctly sum multiple payments from same participant (bug fix test)', () => {
+    // Bug scenario: Manuel pays $11,500 + $7,500 = $19,000
+    // Juanka pays $7,500
+    // Jhonatan pays $0
+    // Total: $26,500
+    // Bug was: backend was dividing total by participants (8833 each)
+    const outing = {
+      participants: [
+        { id: 'manuel', name: 'Manuel' },
+        { id: 'jhonatan', name: 'Jhonatan' },
+        { id: 'juanka', name: 'Juanka' },
+      ],
+      accounts: [
+        {
+          id: 'account1',
+          hasService: false,
+          products: [
+            { participantId: 'manuel', price: 11500, quantity: 1 },
+            { participantId: 'jhonatan', price: 7500, quantity: 1 },
+            { participantId: 'juanka', price: 7500, quantity: 1 },
+          ],
+          payers: [
+            { participantId: 'manuel', amount: 11500 },
+            { participantId: 'juanka', amount: 7500 },
+            { participantId: 'manuel', amount: 7500 }, // Manuel pays twice
+          ],
+        },
+      ],
+    } as Outing;
+
+    const result = DebtCalculator.calculate(outing);
+
+    const manuel = result.balances.find((b) => b.participantId === 'manuel');
+    const jhonatan = result.balances.find((b) => b.participantId === 'jhonatan');
+    const juanka = result.balances.find((b) => b.participantId === 'juanka');
+
+    // Manuel: consumed 11500, paid 11500 + 7500 = 19000, balance = +7500
+    expect(manuel.totalConsumed).toBe(11500);
+    expect(manuel.totalPaid).toBe(19000);
+    expect(manuel.balance).toBe(7500);
+
+    // Jhonatan: consumed 7500, paid 0, balance = -7500
+    expect(jhonatan.totalConsumed).toBe(7500);
+    expect(jhonatan.totalPaid).toBe(0);
+    expect(jhonatan.balance).toBe(-7500);
+
+    // Juanka: consumed 7500, paid 7500, balance = 0
+    expect(juanka.totalConsumed).toBe(7500);
+    expect(juanka.totalPaid).toBe(7500);
+    expect(juanka.balance).toBe(0);
+
+    // Jhonatan owes Manuel $7500
+    expect(result.debts).toHaveLength(1);
+    expect(result.debts[0].fromParticipantId).toBe('jhonatan');
+    expect(result.debts[0].toParticipantId).toBe('manuel');
+    expect(result.debts[0].amount).toBe(7500);
+  });
+
+  it('should use participant relation as fallback when participantId is undefined', () => {
+    // Simulates TypeORM loading participant relation but not participantId column
+    const outing = {
+      participants: [
+        { id: 'A', name: 'A' },
+        { id: 'B', name: 'B' },
+      ],
+      accounts: [
+        {
+          id: '1',
+          hasService: false,
+          products: [
+            { participant: { id: 'A' }, price: 100, quantity: 1 },
+            { participant: { id: 'B' }, price: 100, quantity: 1 },
+          ],
+          payers: [
+            { participant: { id: 'A' }, amount: 200 },
+          ],
+        },
+      ],
+    } as any;
+
+    const result = DebtCalculator.calculate(outing);
+
+    const balanceA = result.balances.find((b) => b.participantId === 'A');
+    const balanceB = result.balances.find((b) => b.participantId === 'B');
+
+    expect(balanceA.totalPaid).toBe(200);
+    expect(balanceA.totalConsumed).toBe(100);
+    expect(balanceA.balance).toBe(100);
+
+    expect(balanceB.totalPaid).toBe(0);
+    expect(balanceB.totalConsumed).toBe(100);
+    expect(balanceB.balance).toBe(-100);
+  });
 });

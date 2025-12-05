@@ -76,7 +76,10 @@ export class DebtCalculator {
         const cost = Number(product.price) * product.quantity;
         accountSubtotal += cost;
 
-        const participant = participantMap.get(product.participantId);
+        // Use participantId or fallback to participant.id if relation is loaded
+        const participantId =
+          product.participantId || (product as any).participant?.id;
+        const participant = participantMap.get(participantId);
         if (participant) {
           participant.totalConsumed += cost;
         }
@@ -101,10 +104,13 @@ export class DebtCalculator {
       });
     }
 
-    // 4. Process Payments
+    // 4. Process Payments - Sum each participant's actual payments
     if (account.payers) {
       account.payers.forEach((payer) => {
-        const participant = participantMap.get(payer.participantId);
+        // Use participantId or fallback to participant.id if relation is loaded
+        const participantId =
+          payer.participantId || (payer as any).participant?.id;
+        const participant = participantMap.get(participantId);
         if (participant) {
           participant.totalPaid += Number(payer.amount);
         }
